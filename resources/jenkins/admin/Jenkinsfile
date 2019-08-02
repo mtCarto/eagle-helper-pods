@@ -4,25 +4,9 @@
 // todo setup sonarqube server in our tools namespace
 // change the password immediately, store in secrets
 
-
-def sonarqubePodLabel = "eagle-api-${UUID.randomUUID().toString()}"
-// todo get this from templates folder?
-podTemplate(label: sonarqubePodLabel, name: sonarqubePodLabel, serviceAccount: 'jenkins', cloud: 'openshift', containers: [
-  containerTemplate(
-    name: 'jnlp',
-    image: '172.50.0.2:5000/openshift/jenkins-slave-python3nodejs',
-    resourceRequestCpu: '500m',
-    resourceLimitCpu: '1000m',
-    resourceRequestMemory: '1Gi',
-    resourceLimitMemory: '4Gi',
-    workingDir: '/tmp',
-    command: '',
-    args: '${computer.jnlpmac} ${computer.name}',
-    envVars: [
-      envVar(key: 'SONARQUBE_URL', value: 'https://sonarqube-eagle-tools.pathfinder.gov.bc.ca')
-    ]
-  )
-])
+// todo get these podTemplates from templates folder?
+def sonarqubePodLabel = "eagle-admin-${UUID.randomUUID().toString()}"
+// podTemplate(label: sonarqubePodLabel, name: sonarqubePodLabel, serviceAccount: 'jenkins', cloud: 'openshift', containers: [])
 
 @NonCPS
 import groovy.json.JsonOutput
@@ -82,7 +66,6 @@ pipeline {
   }
   options {
     disableResume()
-    parrallelsAlwaysFailFast() // todo confirm use, from nr showcase devops tools demo
   }
   stages {
     stage('Build') {
@@ -96,9 +79,8 @@ pipeline {
           echo ">>>>>>Changelog: \n ${CHANGELOG}"
 
           try {
-            // todo update cfg name and image tag, should be eagle-api?
-            echo "Building eagle-api develop branch"
-            openshiftBuild bldCfg: 'eagle-api', showBuildLogs: 'true'
+            echo "Building eagle-admin develop branch"
+            openshiftBuild bldCfg: 'eagle-admin-angular', showBuildLogs: 'true'
 
             echo "Build done"
 
@@ -106,12 +88,12 @@ pipeline {
             // Don't tag with BUILD_ID so the pruner can do it's job; it won't delete tagged images.
             // Tag the images for deployment based on the image's hash
             IMAGE_HASH = sh (
-              script: """oc get istag eagle-api:latest -o template --template=\"{{.image.dockerImageReference}}\"|awk -F \":\" \'{print \$3}\'""",
+              script: """oc get istag eagle-admin:latest -o template --template=\"{{.image.dockerImageReference}}\"|awk -F \":\" \'{print \$3}\'""",
               returnStdout: true).trim()
             echo ">> IMAGE_HASH: ${IMAGE_HASH}"
           } catch (error) {
             notifyRocketChat(
-              "The latest build of eagle-api seems to be broken. \n Error: \n ${error}",
+              "The latest build of eagle-admin seems to be broken. \n Error: \n ${error}",
               ROCKET_QA_WEBHOOK
             )
             throw error
@@ -124,85 +106,58 @@ pipeline {
       agent { label 'unit-tests' }
       steps {
         script {
-          echo "Running unit-tests"
+          echo "Placeholder - Running unit-tests"
         }
       }
     }
-    // todo need this?
-    stage('checkout code') {
-      checkout scm
-    }
+
     stage('exeucte sonar') {
       agent { label 'sonarqubePodLabel' }
+      environment {
+        // set to whatever the secret name is
+        SONARQUBE_URL = credentials('url')
+      }
       steps {
+        checkout scm
         dir('sonar-runner') {
           try {
-            sh './gradlew sonarqube -Dsonar.host.url=https://sonarqube-eagle-tools.pathfinder.gov.bc.ca -Dsonar.verbose=true --stacktrace --info'
+            // todo update url
+            sh './gradlew sonarqube -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.verbose=true --stacktrace --info'
           } finally {
-            echo "Scane complete"
+            echo "Scan complete"
           }
         }
       }
     }
-    stage('Deploy to Test'){
+
+    stage('Deploy to test'){
       steps {
         script {
           try {
-            // todo update stream, cfg names
             echo "Deploying to test..."
-            openshiftTag destStream: 'eagle-api', verbose: 'false', destTag: 'test', srcStream: 'eagle-api', srcTag: "${IMAGE_HASH}"
+            openshiftTag destStream: 'eagle-admin-test', verbose: 'false', destTag: 'test', srcStream: 'eagle-admin-test', srcTag: "${IMAGE_HASH}"
             sleep 5
             // todo eagle-test? what depCfg?
-            openshiftVerifyDeployment depCfg: 'eagle-test', namespace: 'eagle-test', replicaCount: 1, verbose: 'false', verifyReplicaCount: 'false', waitTime: 600000
+            openshiftVerifyDeployment depCfg: 'eagle-admin-build', namespace: 'eagle-test', replicaCount: 1, verbose: 'false', verifyReplicaCount: 'false', waitTime: 600000
             echo ">>>> Deployment Complete"
 
             notifyRocketChat(
-              "A new version of eagle-api is now in Test. \n Changes: \n ${CHANGELOG}",
+              "A new version of eagle-admin is now in Test. \n Changes: \n ${CHANGELOG}",
               ROCKET_DEPLOY_WEBHOOK
             )
 
             notifyRocketChat(
-              "A new version of eagle-api is now in Test and ready for QA. \n Changes to test: \n ${CHANGELOG}",
+              "A new version of eagle-admin is now in Test and ready for QA. \n Changes to Test: \n ${CHANGELOG}",
               ROCKET_QA_WEBHOOK
             )
           } catch (error) {
             notifyRocketChat(
-              "The latest deployment of eagle-api to Test seems to have failed\n'${error.message}'",
+              "The latest deployment of eagle-admin to Test seems to have failed\n'${error.message}'",
               ROCKET_DEPLOY_WEBHOOK
             )
             error('Deploy failed')
           }
         }
-      }
-    }
-  }
-}
-
-def zapPodLabel = "esm-server-owasp-zap-${UUID.randomUUID().toString()}"
-podTemplate(label: zapPodLabel, name: zapPodLabel, serviceAccount: 'jenkins', cloud: 'openshift', containers: [
-  containerTemplate(
-    name: 'jnlp',
-    image: '172.50.0.2:5000/openshift/jenkins-slave-zap',
-    resourceRequestCpu: '500m',
-    resourceLimitCpu: '1000m',
-    resourceRequestMemory: '3Gi',
-    resourceLimitMemory: '4Gi',
-    workingDir: '/home/jenkins',
-    command: '',
-    args: '${computer.jnlpmac} ${computer.name}'
-  )
-])
-{
-  stage('ZAP Security Scan') {
-    node(zapPodLabel) {
-      //the checkout is mandatory
-      echo "checking out source"
-      echo "Build: ${BUILD_ID}"
-      checkout scm
-      dir('zap') {
-        def retVal = sh returnStatus: true, script: './runzap.sh'
-        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '/zap/wrk', reportFiles: 'index.html', reportName: 'ZAP Full Scan', reportTitles: 'ZAP Full Scan'])
-        echo "Return value is: ${retVal}"
       }
     }
   }
