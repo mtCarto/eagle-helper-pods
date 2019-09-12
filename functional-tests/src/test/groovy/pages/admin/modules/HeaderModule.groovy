@@ -1,4 +1,4 @@
-package Public.modules
+package Admin.modules
 
 import geb.Module
 
