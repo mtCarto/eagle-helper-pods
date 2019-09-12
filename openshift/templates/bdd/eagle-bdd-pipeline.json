@@ -1,0 +1,50 @@
+{
+    "apiVersion": "build.openshift.io/v1",
+    "kind": "BuildConfig",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"build.openshift.io/v1\",\"kind\":\"BuildConfig\",\"metadata\":{\"annotations\":{},\"creationTimestamp\":null,\"labels\":{\"app\":\"eagle-admin-pipeline\",\"name\":\"eagle-admin-pipeline\",\"template\":\"eagle-admin-pipeline\"},\"name\":\"eagle-admin-pipeline\",\"namespace\":\"mem-mmti-dev\",\"selfLink\":\"/apis/build.openshift.io/v1/namespaces/mem-mmti-dev/buildconfigs/eagle-admin-pipeline\"},\"spec\":{\"failedBuildsHistoryLimit\":5,\"nodeSelector\":{},\"output\":{},\"postCommit\":{},\"resources\":{},\"runPolicy\":\"Serial\",\"source\":{\"git\":{\"ref\":\"develop\",\"uri\":\"https://github.com/bcgov/eagle-admin\"},\"type\":\"Git\"},\"strategy\":{\"jenkinsPipelineStrategy\":{\"jenkinsfilePath\":\"Jenkinsfile\"},\"type\":\"JenkinsPipeline\"},\"successfulBuildsHistoryLimit\":5,\"triggers\":[{\"github\":{\"secret\":\"v83IcI4ogl1KeSeITon1U2fYQP1CmWMkIUdYC3M3\"},\"type\":\"GitHub\"}]},\"status\":{\"lastVersion\":261}}\n"
+        },
+        "creationTimestamp": null,
+        "labels": {
+            "app": "eagle-admin-pipeline",
+            "name": "eagle-admin-pipeline",
+            "template": "eagle-admin-pipeline"
+        },
+        "name": "eagle-admin-pipeline",
+        "selfLink": "/apis/build.openshift.io/v1/namespaces/mem-mmti-dev/buildconfigs/eagle-admin-pipeline"
+    },
+    "spec": {
+        "failedBuildsHistoryLimit": 5,
+        "nodeSelector": {},
+        "output": {},
+        "postCommit": {},
+        "resources": {},
+        "runPolicy": "Serial",
+        "source": {
+            "git": {
+                "ref": "new-pipeline",
+                "uri": "https://github.com/bcgov/eagle-admin"
+            },
+            "type": "Git"
+        },
+        "strategy": {
+            "jenkinsPipelineStrategy": {
+                "jenkinsfilePath": "Jenkinsfile"
+            },
+            "type": "JenkinsPipeline"
+        },
+        "successfulBuildsHistoryLimit": 5,
+        "triggers": [
+            {
+                "github": {
+                    "secret": "v83IcI4ogl1KeSeITon1U2fYQP1CmWMkIUdYC3M3"
+                },
+                "type": "GitHub"
+            }
+        ]
+    },
+    "status": {
+        "lastVersion": 294
+    }
+}

@@ -1,0 +1,92 @@
+import groovy.json.JsonOutput
+/*
+ * Sends a rocket chat notification
+ */
+def notifyRocketChat(text, url) {
+    def rocketChatURL = url
+    def payload = JsonOutput.toJson([
+      "username":"Jenkins",
+      "icon_url":"https://wiki.jenkins.io/download/attachments/2916393/headshot.png",
+      "text": text
+    ])
+
+    sh("curl -X POST -H 'Content-Type: application/json' --data \'${payload}\' ${rocketChatURL}")
+}
+
+/*
+ * Updates the global pastBuilds array: it will iterate recursively
+ * and add all the builds prior to the current one that had a result
+ * different than 'SUCCESS'.
+ */
+def buildsSinceLastSuccess(previousBuild, build) {
+  if ((build != null) && (build.result != 'SUCCESS')) {
+    pastBuilds.add(build)
+    buildsSinceLastSuccess(pastBuilds, build.getPreviousBuild())
+  }
+}
+
+def bddBrowserStack() {
+  openshift.withCluster() {
+    openshift.withProject() {
+      podTemplate(label: 'bdd-browserstack', name: 'bdd-browserstack', serviceAccount: 'jenkins', cloud: 'openshift', containers: [
+        containerTemplate(
+          name: 'jnlp',
+          image: 'registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7:v3.9',
+          resourceRequestCpu: '500m',
+          resourceLimitCpu: '1000m',
+          resourceRequestMemory: '1Gi',
+          resourceLimitMemory: '2Gi',
+          workingDir: '/tmp',
+          command: '',
+          args: '${computer.jnlpmac} ${computer.name}',
+        )
+      ]) {
+        node('bdd-browserstack') {
+          checkout scm
+          try {
+            // todo add secrets for test users?
+            sh("oc extract secret/bdd-browserstack --to=${env.WORKSPACE} --confirm")
+            echo "Starting Functional Tests"
+            sh './gradlew remoteChromeTest'
+            // todo ensure blocks
+          } catch (Throwable t) {
+            // notifyRocketChat(
+            //   "@all The latest deployment of eagle in Dev has failed functional tests\n Error: \n ${error}",
+            //   ROCKET_QA_WEBHOOK
+            // )
+            return 1
+          }
+        }
+      }
+    }
+  }
+}
+
+result = 0
+pipeline {
+  agent any
+  options {
+    disableResume()
+  }
+  stages {
+    stage('BDD Tests') {
+      steps{
+        script {
+          sh("oc extract secret/rocket-chat-secrets --to=${env.WORKSPACE} --confirm")
+          ROCKET_DEPLOY_WEBHOOK = sh(returnStdout: true, script: 'cat rocket-deploy-webhook')
+          ROCKET_QA_WEBHOOK = sh(returnStdout: true, script: 'cat rocket-qa-webhook')
+
+          echo "Runnning BDD Tests"
+          echo "Build: ${BUILD_ID}"
+          def result = bddBrowserStack()
+          if (result != 0) {
+            echo "[FAILURE] Functional Test stage failed"
+            currentBuild.result = 'FAILURE'
+            return
+          }
+          // todo rocket chat message with link to browserstack reports
+        }
+      }
+    }
+  }
+}
