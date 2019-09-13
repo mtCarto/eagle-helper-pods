@@ -1,7 +1,6 @@
 package Admin.modules
 
 import geb.Module
-
 import geb.waiting.WaitTimeoutException
 
 /**
@@ -9,14 +8,11 @@ import geb.waiting.WaitTimeoutException
  */
 class HeaderModule extends Module {
   static content = {
-    bcLogo { $('.navbar-brand__title') }
-    // todo update tags/ids
-    findProjects { $('#projectSearch') }
-    listProjects { $('#projectList') }
-    eaProcess {}
-    contactUs { $('#contact') }
-    // todo verify this selector is right
-    headerNavigationBar { $('#header #mainNav .navbar-nav') }
+    bcLogo { $('.navbar-brand') }
+    search { $("a[title|='Search']")}
+    calculator { $("a[title|='Open Calculator']") }
+    user { $('#welcome') }
+    headerNavigationBar { $('#header .navbar') }
   }
 
   /**

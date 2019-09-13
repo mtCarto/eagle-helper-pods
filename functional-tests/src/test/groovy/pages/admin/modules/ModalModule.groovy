@@ -1,7 +1,6 @@
 package Admin.modules
 
 import geb.Module
-
 import geb.navigator.Navigator
 
 /**
