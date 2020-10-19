@@ -47,9 +47,10 @@ module.exports = class KeyCloakClient {
   async getUris() {
     const response = await this.api.get(this.appClientPath);
     const data = { ...response.data };
-    const redirectUris = data.redirectUris;
+    // const redirectUris = data.redirectUris;
 
-    return { data, redirectUris };
+    // return { data, redirectUris };
+    return data;
   }
 
   async addUris() {
