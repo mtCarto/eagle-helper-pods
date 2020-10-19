@@ -57,19 +57,18 @@ module.exports = class KeyCloakClient {
 
     console.log("Attempting to add RedirectUri and WebOrigins");
 
-    const { data, redirectUris } = await this.getUris();
-    const putData2 = await this.getUris();
-    console.log('get Data resp: ', data);
-    console.log('got redirects: ', redirectUris)
-    console.log('full putdata retrieved: ', putData2)
-    const putData = { id: data.id, clientId: data.clientId };
+    // const { data, redirectUris } = await this.getUris();
+    const putData = await this.getUris();
+    console.log('get Data resp: ', putData);
+    // const putData = { id: data.id, clientId: data.clientId };
 
-    const hasRedirectUris = redirectUris.find((item) =>
+    const hasRedirectUris = putData.redirectUris.find((item) =>
       item.includes(this.appHost)
     );
+    console.log('hasRedirectUri: ', hasRedirectUris)
     if (!hasRedirectUris) {
-      redirectUris.push(`https://${this.appHost}/*`);
-      putData.redirectUris = redirectUris;
+      putData.redirectUris.push(`https://${this.appHost}/*`);
+      // putData.redirectUris = redirectUris;
     }
 
     console.log('putData: ', JSON.stringify(putData) )
