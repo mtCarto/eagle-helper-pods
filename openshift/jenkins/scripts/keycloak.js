@@ -98,7 +98,7 @@ module.exports = class KeyCloakClient {
     );
 
     if (hasRedirectUris) {
-      putData.redirectUris = redirectUris.filter(
+      putData.redirectUris = putData.redirectUris.filter(
         (item) => !item.includes(this.appHost)
       );
     }
