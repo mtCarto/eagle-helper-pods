@@ -90,7 +90,7 @@ module.exports = class KeyCloakClient {
 
     // const { data, redirectUris } = await this.getUris();
     const putData = await this.getUris();
-    console.log('get Data resp: ', data);
+    console.log('get Data resp: ', putData);
     // const putData = { id: data.id, clientId: data.clientId };
 
     const hasRedirectUris = putData.redirectUris.find((item) =>
