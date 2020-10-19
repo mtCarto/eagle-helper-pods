@@ -63,12 +63,12 @@ module.exports = class KeyCloakClient {
     console.log('get Data resp: ', putData);
     // const putData = { id: data.id, clientId: data.clientId };
 
-    const hasRedirectUris = putData.data.redirectUris.find((item) =>
+    const hasRedirectUris = putData.redirectUris.find((item) =>
       item.includes(this.appHost)
     );
     console.log('hasRedirectUri: ', hasRedirectUris)
     if (!hasRedirectUris) {
-      putData.data.redirectUris.push(`https://${this.appHost}/*`);
+      putData.redirectUris.push(`https://${this.appHost}/*`);
       // putData.redirectUris = redirectUris;
     }
 
