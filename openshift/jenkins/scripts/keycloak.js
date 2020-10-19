@@ -58,6 +58,7 @@ module.exports = class KeyCloakClient {
     console.log("Attempting to add RedirectUri and WebOrigins");
 
     const { data, redirectUris } = await this.getUris();
+    console.log('get Data resp: ', data);
     const putData = { id: data.id, clientId: data.clientId };
 
     const hasRedirectUris = redirectUris.find((item) =>
@@ -68,6 +69,7 @@ module.exports = class KeyCloakClient {
       putData.redirectUris = redirectUris;
     }
 
+    console.log('putData: ', JSON.stringify(putData) )
     if (!hasRedirectUris) {
       this.api
         .put(this.appClientPath, putData)
@@ -83,6 +85,7 @@ module.exports = class KeyCloakClient {
     console.log("Attempting to remove RedirectUri and WebOrigins");
 
     const { data, redirectUris } = await this.getUris();
+    console.log('get Data resp: ', data);
     const putData = { id: data.id, clientId: data.clientId };
 
     const hasRedirectUris = redirectUris.find((item) =>
@@ -94,6 +97,7 @@ module.exports = class KeyCloakClient {
         (item) => !item.includes(this.appHost)
       );
     }
+    console.log('rm putData: ', JSON.stringify(putData))
     if (hasRedirectUris) {
       this.api
         .put(this.appClientPath, putData)
