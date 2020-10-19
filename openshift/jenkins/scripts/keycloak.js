@@ -76,7 +76,8 @@ module.exports = class KeyCloakClient {
     if (!hasRedirectUris) {
       this.api
         .put(this.appClientPath, putData)
-        .then(() => console.log("RedirectUri and WebOrigins added."));
+        .then(() => console.log("RedirectUri and WebOrigins added."))
+        .catch((err) => console.log('put error: ', err));
     } else {
       console.log("RedirectUri and WebOrigins add skipped.");
     }
