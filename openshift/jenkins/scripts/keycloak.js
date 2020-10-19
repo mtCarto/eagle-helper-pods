@@ -71,7 +71,7 @@ module.exports = class KeyCloakClient {
       // putData.redirectUris = redirectUris;
     }
 
-    console.log('putData: ', JSON.stringify(putData) )
+    console.log('putData: ', putData )
     if (!hasRedirectUris) {
       this.api
         .put(this.appClientPath, putData)
